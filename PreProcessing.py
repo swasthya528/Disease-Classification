@@ -8,16 +8,19 @@ from io import StringIO
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-# Verify if dataset folder exists
-DATA_DIR = "./Dataset"  # Correct dataset path
+# Define dataset folders
+DATA_DIRS = ["Acne_Data.csv", "Lupus_Data.csv", "Rashes_Data.csv", "./Dataset4"]  # Update paths as needed
 
-if not os.path.exists(DATA_DIR):
-    raise FileNotFoundError(f"Error: Dataset folder '{DATA_DIR}' not found! Please check the path.")
-else:
-    print(f"Dataset folder found at {DATA_DIR}")
+# Verify if dataset folders exist
+for data_dir in DATA_DIRS:
+    if not os.path.exists(data_dir):
+        raise FileNotFoundError(f"Error: Dataset folder '{data_dir}' not found! Please check the path.")
+    else:
+        print(f"Dataset folder found at {data_dir}")
 
 # Define constants
 IMG_SIZE = (128, 128)  # Resize images to 128x128
+
 
 # Function to load CSV file from GitHub
 def load_csv_from_github(url):
@@ -29,30 +32,38 @@ def load_csv_from_github(url):
     else:
         raise Exception("Error: Unable to fetch CSV file from GitHub.")
 
-# Function to load and preprocess images
-def load_images(data_dir, img_size):
-    labels = os.listdir(data_dir)  # Get folder names as labels
-    X, y = [], []
 
-    for idx, label in enumerate(labels):
-        class_dir = os.path.join(data_dir, label)
-        if not os.path.isdir(class_dir):
-            continue
+# Function to load and preprocess images from multiple folders
+def load_images_from_folders(data_dirs, img_size):
+    X, y, class_names = [], [], {}
+    label_index = 0
 
-        for img_name in os.listdir(class_dir):
-            img_path = os.path.join(class_dir, img_name)
-            img = cv2.imread(img_path)
-            if img is None:
+    for data_dir in data_dirs:
+        labels = os.listdir(data_dir)  # Get folder names as labels
+        for label in labels:
+            class_dir = os.path.join(data_dir, label)
+            if not os.path.isdir(class_dir):
                 continue
-            img = cv2.resize(img, img_size)  # Resize to target size
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert to RGB format
-            X.append(img)
-            y.append(idx)  # Assign numeric label
 
-    return np.array(X), np.array(y), labels
+            if label not in class_names:
+                class_names[label] = label_index
+                label_index += 1
+
+            for img_name in os.listdir(class_dir):
+                img_path = os.path.join(class_dir, img_name)
+                img = cv2.imread(img_path)
+                if img is None:
+                    continue
+                img = cv2.resize(img, img_size)  # Resize to target size
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert to RGB format
+                X.append(img)
+                y.append(class_names[label])  # Assign numeric label
+
+    return np.array(X), np.array(y), class_names
+
 
 # Load dataset
-X, y, class_names = load_images(DATA_DIR, IMG_SIZE)
+X, y, class_mapping = load_images_from_folders(DATA_DIRS, IMG_SIZE)
 X = X / 255.0  # Normalize images
 
 # Ensure there are enough samples for splitting
