@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Skin Disease Classifier</title>
+</head>
+<body>
+    <h1>Upload a Skin Image</h1><br>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" required><br>
+        <button type="submit">Submit</button>
+        <br>
+    </form>
+
+    {% if prediction %}
+        <h2>Predicted Disease: {{ prediction }}</h2>
+        <img src="{{ image_path }}" alt="Uploaded Image" width="300">
+    {% endif %}
+</body>
+</html>
